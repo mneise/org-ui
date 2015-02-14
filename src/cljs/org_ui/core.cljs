@@ -3,11 +3,16 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [chord.client :refer [ws-ch]]
-            [cljs.core.async :refer [<! >! put! close! chan]]))
+            [cljs.core.async :refer [<! >! put! close! chan]]
+            [sablono.core :as html :refer-macros [html]]
+            [cljs-uuid-utils :refer [make-random-uuid uuid-string]]))
 
 (enable-console-print!)
 
 (defonce app-state (atom {:text "Hello Chestnut!"}))
+
+(defn uuid []
+  (uuid-string (make-random-uuid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WebSocket
@@ -39,18 +44,23 @@
       (receive-msg! server-ch)
       (send-loop server-ch))))
 
-(setup-connection)
-(send-msg! "Hello Server")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Views
 
+(defn application [cursor owner]
+  (reify
+    om/IWillMount
+    (will-mount [_]
+      (send-msg! {"id" (uuid)
+                  "command" "list"}))
+    om/IRender
+    (render [_]
+      (html
+       [:h1 "Hello, World!"]))))
+
 (defn main []
+  (setup-connection)
   (om/root
-    (fn [app owner]
-      (reify
-        om/IRender
-        (render [_]
-          (dom/h1 nil (:text app)))))
-    app-state
-    {:target (. js/document (getElementById "app"))}))
+   application
+   app-state
+   {:target (. js/document (getElementById "app"))}))

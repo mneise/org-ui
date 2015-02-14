@@ -9,6 +9,7 @@
                  [org.clojure/clojurescript "0.0-2850" :scope "provided"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [jarohen/chord "0.6.0"]
+                 [org.clojars.franks42/cljs-uuid-utils "0.1.3"]
 
                  ;; Server
                  [ring "1.3.1"]
@@ -16,11 +17,12 @@
 
                  ;; UI
                  [om "0.8.0-rc1"]
-                 [enlive "1.1.5"]
+                 [sablono "0.3.3"]
 
                  ;; Dev
                  [figwheel "0.1.4-SNAPSHOT"]
                  [environ "1.0.0"]
+                 [enlive "1.1.5"]
                  [leiningen "2.5.0"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
