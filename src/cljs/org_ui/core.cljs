@@ -9,7 +9,8 @@
 
 (enable-console-print!)
 
-(defonce app-state (atom {}))
+(defonce app-state (atom {:title "Org UI"
+                          :data {}}))
 
 (defn uuid []
   (uuid-string (make-random-uuid)))
@@ -37,9 +38,9 @@
 (defn receive-msg! [server-ch]
   (go-loop []
     (let [{:keys [message]} (<! server-ch)
-          uuid (get message "in-response-to")
-          data (get message "data")]
-      (when-let [handler (get @requests uuid)]
+          message (clojure.walk/keywordize-keys message)
+          {:keys [in-response-to data]} message]
+      (when-let [handler (get @requests in-response-to)]
         (handler data)
         (swap! requests dissoc uuid))
       (recur))))
@@ -53,6 +54,21 @@
       (send-loop server-ch))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Handler
+
+(defmulti handle-event
+  (fn [event msg app owner] event))
+
+(defmethod handle-event :list [_ msg app owner]
+  (om/update! app :data msg))
+
+(defmethod handle-event :default [_ msg app owner])
+
+(defn create-handler [event app owner]
+  (fn [msg]
+    (handle-event event msg app owner)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Views
 
 (defn application [cursor owner]
@@ -60,13 +76,13 @@
     om/IWillMount
     (will-mount [_]
       (send-msg! {"id" (uuid)
-                  "command" "list"} println))
+                  "command" "list"} (create-handler :list cursor owner)))
     om/IRender
     (render [_]
       (html
        [:div.container
         [:div.page-header
-         [:h1 "Org UI"]]]))))
+         [:h1 (:title cursor)]]]))))
 
 (defn main []
   (setup-connection)
