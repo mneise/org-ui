@@ -9,7 +9,7 @@
 
 (enable-console-print!)
 
-(defonce app-state (atom {:text "Hello Chestnut!"}))
+(defonce app-state (atom {}))
 
 (defn uuid []
   (uuid-string (make-random-uuid)))
@@ -56,7 +56,9 @@
     om/IRender
     (render [_]
       (html
-       [:h1 "Hello, World!"]))))
+       [:div.container
+        [:div.page-header
+         [:h1 "Org UI"]]]))))
 
 (defn main []
   (setup-connection)
