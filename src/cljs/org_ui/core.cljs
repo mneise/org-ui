@@ -10,10 +10,14 @@
 (enable-console-print!)
 
 (defonce app-state (atom {:title "Org UI"
-                          :data {}}))
+                          :data {}
+                          :selected {:children []}}))
 
 (defn uuid []
   (uuid-string (make-random-uuid)))
+
+(defn select-entry [entry]
+  (om/update! (om/root-cursor app-state) :selected entry))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WebSocket
@@ -60,7 +64,8 @@
   (fn [event msg app owner] event))
 
 (defmethod handle-event :list [_ msg app owner]
-  (om/update! app :data msg))
+  (om/update! app :data msg)
+  (om/update! app [:selected :children] msg))
 
 (defmethod handle-event :default [_ msg app owner])
 
@@ -71,6 +76,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Views
 
+(defn entry-view [entry owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:li.list-group-item {:on-click (fn [] (select-entry entry))
+                             :style {:cursor "pointer"}} (:name entry)]))))
+
 (defn application [cursor owner]
   (reify
     om/IWillMount
@@ -79,10 +92,14 @@
                   "command" "list"} (create-handler :list cursor owner)))
     om/IRender
     (render [_]
-      (html
-       [:div.container
-        [:div.page-header
-         [:h1 (:title cursor)]]]))))
+      (let [current (:selected cursor)]
+        (html
+         [:div.container
+          [:div.page-header
+           [:h1 (:title cursor)]]
+          [:h3 (:name current)]
+          [:div.list-group
+           (om/build-all entry-view (:children current))]])))))
 
 (defn main []
   (setup-connection)
