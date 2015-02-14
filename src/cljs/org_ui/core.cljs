@@ -10,14 +10,24 @@
 (enable-console-print!)
 
 (defonce app-state (atom {:title "Org UI"
-                          :data {}
-                          :selected {:children []}}))
+                          :data {:children []}}))
+(def app-history (atom [@app-state]))
 
 (defn uuid []
   (uuid-string (make-random-uuid)))
 
 (defn select-entry [entry]
-  (om/update! (om/root-cursor app-state) :selected entry))
+  (om/update! (om/root-cursor app-state) :data entry))
+
+(add-watch app-state :history
+           (fn [_ _ _ n]
+             (when-not (= (last @app-history) n)
+               (swap! app-history conj n))))
+
+(defn previous []
+  (when (> (count @app-history) 1)
+    (swap! app-history pop)
+    (reset! app-state (last @app-history))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WebSocket
@@ -64,8 +74,7 @@
   (fn [event msg app owner] event))
 
 (defmethod handle-event :list [_ msg app owner]
-  (om/update! app :data msg)
-  (om/update! app [:selected :children] msg))
+  (om/update! app [:data :children] msg))
 
 (defmethod handle-event :default [_ msg app owner])
 
@@ -92,12 +101,18 @@
                   "command" "list"} (create-handler :list cursor owner)))
     om/IRender
     (render [_]
-      (let [current (:selected cursor)]
+      (let [current (:data cursor)
+            headline (:name current)]
         (html
          [:div.container
           [:div.page-header
            [:h1 (:title cursor)]]
-          [:h3 (:name current)]
+          (when headline
+            [:h3
+             [:button.btn.btn-default.back
+              {:on-click previous}
+              [:span.glyphicon.glyphicon-menu-left]]
+             headline])
           [:div.list-group
            (om/build-all entry-view (:children current))]])))))
 
