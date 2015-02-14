@@ -19,10 +19,14 @@
 
 (def server-url "ws://192.168.1.6:3034")
 (def new-msg-ch (chan))
+(def requests (atom {}))
 
-(defn send-msg! [msg]
-  (go
-    (>! new-msg-ch msg)))
+(defn send-msg! [msg & [handler]]
+  (let [uuid (get msg "id")]
+    (when handler
+      (swap! requests assoc uuid handler))
+    (go
+      (>! new-msg-ch msg))))
 
 (defn send-loop [server-ch]
   (go-loop []
@@ -32,8 +36,12 @@
 
 (defn receive-msg! [server-ch]
   (go-loop []
-    (when-let [msg (<! server-ch)]
-      (println msg)
+    (let [{:keys [message]} (<! server-ch)
+          uuid (get message "in-response-to")
+          data (get message "data")]
+      (when-let [handler (get @requests uuid)]
+        (handler data)
+        (swap! requests dissoc uuid))
       (recur))))
 
 (defn setup-connection []
@@ -52,7 +60,7 @@
     om/IWillMount
     (will-mount [_]
       (send-msg! {"id" (uuid)
-                  "command" "list"}))
+                  "command" "list"} println))
     om/IRender
     (render [_]
       (html
