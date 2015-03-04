@@ -16,7 +16,7 @@
                  [compojure "1.2.0"]
 
                  ;; UI
-                 [om "0.8.0-rc1"]
+                 [org.omcljs/om "0.8.8"]
                  [sablono "0.3.3"]
 
                  ;; Dev
@@ -25,28 +25,32 @@
                  [enlive "1.1.5"]
                  [leiningen "2.5.0"]]
 
-  :plugins [[lein-cljsbuild "1.0.3"]
+  :plugins [[lein-cljsbuild "1.0.5"]
             [lein-environ "1.0.0"]]
 
   :min-lein-version "2.5.0"
 
   :uberjar-name "org-ui.jar"
 
+  :main org-ui.server
+
   :cljsbuild {:builds {:app {:source-paths ["src/cljs"]
                              :compiler {:output-to     "resources/public/js/app.js"
                                         :output-dir    "resources/public/js/out"
                                         :source-map    "resources/public/js/out.js.map"
-                                        :preamble      ["react/react.min.js"]
-                                        :externs       ["react/externs/react.js"]
                                         :optimizations :none
                                         :pretty-print  true}}}}
 
   :profiles {:dev {:repl-options {:init-ns org-ui.server}
+
                    :plugins [[lein-figwheel "0.1.4-SNAPSHOT"]]
+
                    :figwheel {:http-server-root "public"
                               :port 3449
                               :css-dirs ["resources/public/css"]}
+
                    :env {:is-dev true}
+
                    :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]}}}}
 
              :uberjar {:hooks [leiningen.cljsbuild]

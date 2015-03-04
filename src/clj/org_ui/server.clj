@@ -1,4 +1,5 @@
 (ns org-ui.server
+  (:gen-class)
   (:require [clojure.java.io :as io]
             [org-ui.dev :refer [is-dev? inject-devmode-html start-figwheel]]
             [compojure.core :refer [GET defroutes]]

@@ -1,7 +1,6 @@
 (ns org-ui.core
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
             [chord.client :refer [ws-ch]]
             [cljs.core.async :refer [<! >! put! close! chan]]
             [sablono.core :as html :refer-macros [html]]
